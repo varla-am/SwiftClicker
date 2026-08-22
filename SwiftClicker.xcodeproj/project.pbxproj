@@ -6,8 +6,23 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXCopyFilesBuildPhase section */
+		8AE296D5302650DF004B1DBC /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		8AD5E883302649D4003EB7CF /* SwiftClicker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwiftClicker.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8AE296C4302650DE004B1DBC /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		8AE296C6302650DE004B1DBC /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -33,6 +48,7 @@
 			isa = PBXGroup;
 			children = (
 				8AD5E885302649D4003EB7CF /* SwiftClicker */,
+				8AE296C3302650DE004B1DBC /* Frameworks */,
 				8AD5E884302649D4003EB7CF /* Products */,
 			);
 			sourceTree = "<group>";
@@ -45,6 +61,15 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		8AE296C3302650DE004B1DBC /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				8AE296C4302650DE004B1DBC /* WidgetKit.framework */,
+				8AE296C6302650DE004B1DBC /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -55,6 +80,7 @@
 				8AD5E87F302649D4003EB7CF /* Sources */,
 				8AD5E880302649D4003EB7CF /* Frameworks */,
 				8AD5E881302649D4003EB7CF /* Resources */,
+				8AE296D5302650DF004B1DBC /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
@@ -246,6 +272,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = G66D3PLMB8;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
@@ -288,6 +315,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = G66D3PLMB8;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
