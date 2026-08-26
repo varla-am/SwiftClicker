@@ -1,4 +1,6 @@
-SwiftClicker is useless clicker that is coded 100% on Swift with SwiftUI.
-With custom mode you can add infinite clicks.
+Latest version: v2.00
+Latest GitHub link: https://github.com/varla-am/SwiftClicker
+SwiftClicker is simple macOS clicker game built on SwiftUI.
+SwiftClicker has a custom mode that allows you to add as much clicks as you want.
 Custom mode code: 123
-Version: v2.00
+SwiftClicker is fully open-source and free software.
