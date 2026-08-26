@@ -1,6 +1,6 @@
 //
 //  ContentView.swift
-//  SwiftClicker v1.02
+//  SwiftClicker v2.00
 //
 //  Created by Varlaam on 07/08/2026.
 //
