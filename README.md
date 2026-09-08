@@ -1,5 +1,5 @@
-Latest version: v3.00 .
-Latest GitHub link: https://github.com/varla-am/SwiftClicker .
+Latest version: v4.00 .
+Latest GitHub link: https://github.com/varlф-am/SwiftClicker .
 SwiftClicker is simple macOS clicker game built on SwiftUI.
 SwiftClicker has a custom mode that allows you to add as much clicks as you want.
 Custom mode code: 123 .
