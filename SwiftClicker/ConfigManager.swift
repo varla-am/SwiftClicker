@@ -89,7 +89,7 @@ class ConfigManager: ObservableObject {
     func save() {
         guard let url = configURL else { return }
         let plist: [String: Any] = [
-            "version": "4.0",
+            "version": "5.0",
             "customCode": customCode,
             "backgroundImagePath": backgroundImagePath,
             "appTheme": appTheme,

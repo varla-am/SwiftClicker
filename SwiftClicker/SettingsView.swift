@@ -247,7 +247,7 @@ struct AboutTab: View {
         #if os(macOS)
         VStack(spacing: 10) {
             icon
-            Text("SwiftClicker v4.0")
+            Text("SwiftClicker v5.0")
                 .font(.system(size: 26, weight: .bold, design: .rounded))
                 .entrance(1, active: hasAppeared)
             Text("by Varlaam (varla-am)")
@@ -267,7 +267,7 @@ struct AboutTab: View {
         HStack(spacing: 14) {
             icon
             VStack(alignment: .leading, spacing: 4) {
-                Text("SwiftClicker v4.0")
+                Text("SwiftClicker v5.0")
                     .font(.system(size: 20, weight: .bold, design: .rounded))
                 Text("by Varlaam (varla-am)")
                     .font(.subheadline)

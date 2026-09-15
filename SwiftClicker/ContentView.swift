@@ -1,6 +1,6 @@
 //
 //  ContentView.swift
-//  SwiftClicker v4.0
+//  SwiftClicker v5.0
 //
 //  Created by Varlaam on 07/08/2026.
 //
@@ -44,7 +44,7 @@ struct ContentView: View {
                     .rotationEffect(.degrees(gearAngle))
                     .entrance(0, active: hasAppeared)
 
-                Text("SwiftClicker v4.0")
+                Text("SwiftClicker v5.0")
                     .font(.title2)
                     .bold()
                     .foregroundStyle(config.textColor)
