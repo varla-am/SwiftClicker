@@ -10,17 +10,32 @@ import UniformTypeIdentifiers
 
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
+    #if os(macOS)
+    @State private var tab = 0
+    #endif
 
     var body: some View {
         #if os(macOS)
-        TabView {
-            GeneralTab()
-                .tabItem { Label("General", systemImage: "gearshape") }
-            AboutTab()
-                .tabItem { Label("About", systemImage: "info.circle") }
+        VStack(spacing: 18) {
+            Picker("", selection: $tab.animation(.snappy(duration: 0.25))) {
+                Text("General").tag(0)
+                Text("About").tag(1)
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .frame(width: 200)
+
+            Group {
+                if tab == 0 {
+                    GeneralTab()
+                } else {
+                    AboutTab()
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .frame(width: 440, height: 300)
-        .padding(.bottom, 8)
+        .padding(20)
+        .frame(width: 460, height: 320)
         #else
         NavigationStack {
             Form {
