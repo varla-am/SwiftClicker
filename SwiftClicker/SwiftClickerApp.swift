@@ -15,8 +15,12 @@ struct SwiftClickerApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(config)
-                .frame(width: 390, height: 680)
+                #if os(macOS)
+                .frame(width: Layout.windowSize.width, height: Layout.windowSize.height)
+                #endif
         }
+        #if os(macOS)
         .windowResizability(.contentSize)
+        #endif
     }
 }

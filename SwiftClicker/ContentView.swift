@@ -178,7 +178,7 @@ struct ContentView: View {
             }
             .padding(.horizontal, 22)
             .padding(.bottom, 56)
-            .frame(maxWidth: .infinity, minHeight: 680)
+            .fillScrollContainer()
             } // ScrollView
             .scrollIndicators(.never)
         }
@@ -195,6 +195,7 @@ struct ContentView: View {
             .padding(.leading, 18)
             .padding(.bottom, 18)
             .onHover { hovering in
+                guard Layout.hasPointer else { return }
                 withAnimation(.spring(response: 0.45, dampingFraction: 0.55)) {
                     settingsHovering = hovering
                 }
@@ -209,7 +210,6 @@ struct ContentView: View {
         .onAppear { hasAppeared = true }
     }
 
-    // MARK: - Actions
 
     private func registerClick() {
         let (result, overflow) = numbernum.addingReportingOverflow(numberper)
@@ -265,13 +265,13 @@ struct ContentView: View {
         }
     }
 
-    // MARK: - Background
+
 
     @ViewBuilder
     private var backgroundView: some View {
         if !config.backgroundImagePath.isEmpty,
-           let nsImage = NSImage(contentsOfFile: config.backgroundImagePath) {
-            Image(nsImage: nsImage)
+           let image = Image(contentsOfFile: config.backgroundImagePath) {
+            image
                 .resizable()
                 .aspectRatio(contentMode: .fill)
                 .blur(radius: 8, opaque: true)
