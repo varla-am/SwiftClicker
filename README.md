@@ -1,4 +1,4 @@
-Latest version: v4.00 .
+Latest version: v5.00 .
 Latest GitHub link: https://github.com/varlа-am/SwiftClicker .
 SwiftClicker is simple macOS clicker game built on SwiftUI.
 SwiftClicker has a custom mode that allows you to add as much clicks as you want.
