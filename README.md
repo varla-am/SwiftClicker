@@ -3,6 +3,7 @@
 ## Minimal macOS version: 26.5 Tahoe
 ## Latest GitHub link: https://github.com/varla-am/SwiftClicker
 ### SwiftClicker is simple macOS clicker game built on SwiftUI
+#### Settings options:
 | Option | Meaning |
 |--------|---------|
 | Background Image | Choose a background image from your files |
