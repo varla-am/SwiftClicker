@@ -1,7 +1,7 @@
 # SwiftClicker
 ## Latest version: v5.00
 ## Minimal macOS version: 26.5 Tahoe
-## Latest GitHub link: `https://github.com/varlа-am/SwiftClicker/blob/main`
+## Latest GitHub link: https://github.com/varlа-am/SwiftClicker/blob/main
 ### SwiftClicker is simple macOS clicker game built on SwiftUI.
 ### SwiftClicker has a custom mode that allows you to add as much clicks as you want.
 ### Custom mode code: `123`
