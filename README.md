@@ -1,13 +1,8 @@
 # SwiftClicker
-## Latest version: v5.00
+## Latest version: v7.00
 ## Minimal macOS version: 26.5 Tahoe
 ## Latest GitHub link: https://github.com/varla-am/SwiftClicker
-### SwiftClicker is simple macOS clicker game built on SwiftUI
-#### Settings options:
-| Option | Meaning |
-|--------|---------|
-| Background Image | Choose a background image from your files |
-| Custom mode code | Change the custom mode code |
-| Theme | Change app theme (System = follows system settings) |
-| Text Color | Change text color in the app |
-## SwiftClicker is fully open-source and free software.
+### SwiftClicker is an AutoClicker that has overlay and shortcut mode.
+### To use it you have to grant Accessbility to this app
+### SwiftClicker has a clicker game too, you can just click on button and buy upgrades.
+
