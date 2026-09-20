@@ -19,27 +19,29 @@ struct SettingsView: View {
         VStack(spacing: 18) {
             Picker("", selection: $tab.animation(.snappy(duration: 0.25))) {
                 Text("General").tag(0)
-                Text("About").tag(1)
+                Text("Game").tag(1)
+                Text("About").tag(2)
             }
             .pickerStyle(.segmented)
             .labelsHidden()
-            .frame(width: 200)
+            .frame(width: 280)
 
             Group {
-                if tab == 0 {
-                    GeneralTab()
-                } else {
-                    AboutTab()
+                switch tab {
+                case 0:  GeneralTab()
+                case 1:  GameTab()
+                default: AboutTab()
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .padding(20)
-        .frame(width: 460, height: 320)
+        .frame(width: 500, height: 380)
         #else
         NavigationStack {
             Form {
                 Section("General") { GeneralTab() }
+                Section("Game") { GameTab() }
                 Section("About") { AboutTab() }
             }
             .navigationTitle("Settings")
@@ -54,11 +56,10 @@ struct SettingsView: View {
     }
 }
 
-// MARK: - Settings rows, shared by both layouts
+// MARK: - General: the autoclicker and how the app looks
 
 struct GeneralTab: View {
     @EnvironmentObject var config: ConfigManager
-    @State private var showFileImporter = false
     @State private var hasAppeared = false
 
     private var textColorBinding: Binding<Color> {
@@ -78,33 +79,6 @@ struct GeneralTab: View {
 
     private var currentColor: Color {
         Color(red: config.textColorR, green: config.textColorG, blue: config.textColorB)
-    }
-
-    private var backgroundControls: some View {
-        HStack(spacing: 8) {
-            if !config.backgroundImagePath.isEmpty {
-                Text(URL(fileURLWithPath: config.backgroundImagePath).lastPathComponent)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .transition(.asymmetric(
-                        insertion: .push(from: .leading).combined(with: .opacity),
-                        removal: .scale(scale: 0.85).combined(with: .opacity)))
-            }
-            Button("Choose...") { showFileImporter = true }
-                .hoverLift(1.05)
-            if !config.backgroundImagePath.isEmpty {
-                Button("Reset") {
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
-                        config.backgroundImagePath = ""
-                    }
-                }
-                .foregroundStyle(.red)
-                .hoverLift(1.05)
-                .transition(.scale(scale: 0.7).combined(with: .opacity))
-            }
-        }
-        .animation(.spring(response: 0.42, dampingFraction: 0.78), value: config.backgroundImagePath)
     }
 
     private var themePicker: some View {
@@ -142,6 +116,147 @@ struct GeneralTab: View {
         }
     }
 
+    #if os(macOS)
+    private var frequencyControls: some View {
+        HStack(spacing: 10) {
+            Slider(value: $config.clicksPerSecond, in: 1...50, step: 1)
+                .frame(width: 170)
+            Text("\(Int(config.clicksPerSecond)) CPS")
+                .monospacedDigit()
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .frame(width: 60, alignment: .leading)
+        }
+    }
+
+    private var delayControls: some View {
+        HStack(spacing: 10) {
+            Stepper(value: $config.startDelay, in: 0...10, step: 1) {
+                Text("\(Int(config.startDelay)) s")
+                    .monospacedDigit()
+                    .font(.callout)
+            }
+            .frame(width: 110)
+            Text("before clicking starts")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private var overlayStylePicker: some View {
+        Picker("", selection: $config.overlayStyle.animation(.snappy(duration: 0.3))) {
+            ForEach(OverlayStyle.allCases) { style in
+                Text(style.name).tag(style.rawValue)
+            }
+        }
+        .pickerStyle(.segmented)
+        .frame(width: 220)
+    }
+
+    private var hotkeyPicker: some View {
+        Picker("", selection: $config.hotkeyKeyCode) {
+            ForEach(Hotkey.choices, id: \.code) { choice in
+                Text(choice.name).tag(choice.code)
+            }
+        }
+        .labelsHidden()
+        .frame(width: 100)
+    }
+    #endif
+
+    var body: some View {
+        content.onAppear { hasAppeared = true }
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        #if os(macOS)
+        Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 14) {
+            GridRow {
+                Text("Click Speed").gridColumnAlignment(.trailing)
+                frequencyControls
+            }
+            .entrance(0, active: hasAppeared)
+
+            GridRow {
+                Text("Start Delay").gridColumnAlignment(.trailing)
+                delayControls
+            }
+            .entrance(1, active: hasAppeared)
+
+            GridRow {
+                Text("Hotkey").gridColumnAlignment(.trailing)
+                hotkeyPicker
+            }
+            .entrance(2, active: hasAppeared)
+
+            GridRow {
+                Text("Overlay Style").gridColumnAlignment(.trailing)
+                overlayStylePicker
+            }
+            .entrance(3, active: hasAppeared)
+
+            GridRow {
+                Text("Theme").gridColumnAlignment(.trailing)
+                themePicker
+            }
+            .entrance(4, active: hasAppeared)
+
+            GridRow {
+                Text("Text Color").gridColumnAlignment(.trailing)
+                textColorControls
+            }
+            .entrance(5, active: hasAppeared)
+        }
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        #else
+        // iOS cannot send clicks to other apps, so only the looks are configurable.
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Theme")
+            themePicker.frame(maxWidth: .infinity)
+        }
+        .entrance(0, active: hasAppeared)
+        LabeledContent("Text Color") { textColorControls }
+            .entrance(1, active: hasAppeared)
+        #endif
+    }
+}
+
+// MARK: - Game
+
+struct GameTab: View {
+    @EnvironmentObject var config: ConfigManager
+    @State private var showFileImporter = false
+    @State private var hasAppeared = false
+
+    private var backgroundControls: some View {
+        HStack(spacing: 8) {
+            if !config.backgroundImagePath.isEmpty {
+                Text(URL(fileURLWithPath: config.backgroundImagePath).lastPathComponent)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .transition(.asymmetric(
+                        insertion: .push(from: .leading).combined(with: .opacity),
+                        removal: .scale(scale: 0.85).combined(with: .opacity)))
+            }
+            Button("Choose...") { showFileImporter = true }
+                .hoverLift(1.05)
+            if !config.backgroundImagePath.isEmpty {
+                Button("Reset") {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
+                        config.backgroundImagePath = ""
+                    }
+                }
+                .foregroundStyle(.red)
+                .hoverLift(1.05)
+                .transition(.scale(scale: 0.7).combined(with: .opacity))
+            }
+        }
+        .animation(.spring(response: 0.42, dampingFraction: 0.78), value: config.backgroundImagePath)
+    }
+
     var body: some View {
         content
             .onAppear { hasAppeared = true }
@@ -160,50 +275,33 @@ struct GeneralTab: View {
         #if os(macOS)
         Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 14) {
             GridRow {
-                Text("Background Image").gridColumnAlignment(.trailing)
-                backgroundControls
+                Text("Custom Mode Code").gridColumnAlignment(.trailing)
+                TextField("", text: $config.customCode).frame(width: 120)
             }
             .entrance(0, active: hasAppeared)
 
             GridRow {
-                Text("Custom Mode Code").gridColumnAlignment(.trailing)
-                TextField("", text: $config.customCode).frame(width: 120)
+                Text("Background Image").gridColumnAlignment(.trailing)
+                backgroundControls
             }
             .entrance(1, active: hasAppeared)
-
-            GridRow {
-                Text("Theme").gridColumnAlignment(.trailing)
-                themePicker
-            }
-            .entrance(2, active: hasAppeared)
-
-            GridRow {
-                Text("Text Color").gridColumnAlignment(.trailing)
-                textColorControls
-            }
-            .entrance(3, active: hasAppeared)
         }
         .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         #else
-        LabeledContent("Background Image") { backgroundControls }
-            .entrance(0, active: hasAppeared)
         LabeledContent("Custom Mode Code") {
             TextField("", text: $config.customCode)
                 .multilineTextAlignment(.trailing)
                 .frame(width: 120)
         }
-        .entrance(1, active: hasAppeared)
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Theme")
-            themePicker.frame(maxWidth: .infinity)
-        }
-        .entrance(2, active: hasAppeared)
-        LabeledContent("Text Color") { textColorControls }
-            .entrance(3, active: hasAppeared)
+        .entrance(0, active: hasAppeared)
+        LabeledContent("Background Image") { backgroundControls }
+            .entrance(1, active: hasAppeared)
         #endif
     }
 }
+
+// MARK: - About
 
 struct AboutTab: View {
     @State private var hasAppeared = false
@@ -225,8 +323,7 @@ struct AboutTab: View {
     }
 
     private var sourceLink: some View {
-        Link("https://github.com/varla-am/SwiftClicker",
-             destination: URL(string: "https://github.com/varla-am/SwiftClicker")!)
+        Link(AppInfo.sourceURL, destination: URL(string: AppInfo.sourceURL)!)
             .font(.subheadline)
             .underline(linkHovering)
             .scaleEffect(linkHovering ? 1.05 : 1.0)
@@ -247,7 +344,7 @@ struct AboutTab: View {
         #if os(macOS)
         VStack(spacing: 10) {
             icon
-            Text("SwiftClicker v5.0")
+            Text("SwiftClicker v\(AppInfo.version)")
                 .font(.system(size: 26, weight: .bold, design: .rounded))
                 .entrance(1, active: hasAppeared)
             Text("by Varlaam (varla-am)")
@@ -267,7 +364,7 @@ struct AboutTab: View {
         HStack(spacing: 14) {
             icon
             VStack(alignment: .leading, spacing: 4) {
-                Text("SwiftClicker v5.0")
+                Text("SwiftClicker v\(AppInfo.version)")
                     .font(.system(size: 20, weight: .bold, design: .rounded))
                 Text("by Varlaam (varla-am)")
                     .font(.subheadline)

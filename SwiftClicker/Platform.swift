@@ -53,11 +53,18 @@ extension View {
     }
 }
 
+enum AppInfo {
+    /// One place to bump the version shown in the UI and written into config.plist.
+    static let version = "7.0"
+    static let sourceURL = "https://github.com/varla-am/SwiftClicker"
+}
+
 enum Layout {
     /// The Mac window is a fixed 390x680; on iOS the content fills the screen.
     #if os(macOS)
     static let minContentHeight: CGFloat? = 680
-    static let windowSize = CGSize(width: 390, height: 680)
+    static let windowSize = CGSize(width: 390, height: 560)
+    static let gameWindowSize = CGSize(width: 390, height: 680)
     #else
     static let minContentHeight: CGFloat? = nil
     #endif
@@ -70,4 +77,20 @@ enum Layout {
         false
         #endif
     }
+
+    // Typography and spacing: compact for the small Mac window,
+    // roomier and larger for a full iPhone screen.
+    #if os(macOS)
+    static let contentSpacing: CGFloat = 5
+    static let titleFont: Font = .title2
+    static let counterFont: Font = .body
+    static let fieldWidth: CGFloat = 220
+    static let horizontalPadding: CGFloat = 26
+    #else
+    static let contentSpacing: CGFloat = 16
+    static let titleFont: Font = .largeTitle
+    static let counterFont: Font = .title3
+    static let fieldWidth: CGFloat = 300
+    static let horizontalPadding: CGFloat = 32
+    #endif
 }

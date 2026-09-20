@@ -1,296 +1,296 @@
 //
 //  ContentView.swift
-//  SwiftClicker v5.0
+//  SwiftClicker
 //
 //  Created by Varlaam on 07/08/2026.
+//
+//  macOS: the autoclicker control panel. iOS: the game, since a phone cannot
+//  send clicks to other apps.
 //
 
 import SwiftUI
 
 struct ContentView: View {
+    var body: some View {
+        #if os(macOS)
+        ClickerPanel()
+        #else
+        GameView()
+        #endif
+    }
+}
+
+#if os(macOS)
+
+struct ClickerPanel: View {
     @EnvironmentObject var config: ConfigManager
+    @EnvironmentObject var engine: ClickerEngine
+    @EnvironmentObject var overlay: OverlayController
+    @Environment(\.openWindow) private var openWindow
 
-    @State private var numberper = 1
-    @State private var numbernum = 0
-    @State private var numberpercost = 10
-    @State private var incode = ""
-    @State private var developeractive = false
-    @State private var showsDeveloperCodeField = false
-    @State private var numberadd = ""
-    @State private var errorMessage = ""
     @State private var showsSettings = false
-
-    // Animation state
-    @State private var gains: [FloatingGain] = []
-    @State private var clickTick = 0
-    @State private var shakeTick = 0
-    @State private var gearAngle: Double = 0
-    @State private var counterPop: CGFloat = 1
     @State private var settingsHovering = false
     @State private var hasAppeared = false
-    @State private var bgDrift: CGFloat = 1.0
 
-    private var canAfford: Bool { numbernum >= numberpercost }
+    private var overlayBinding: Binding<Bool> {
+        Binding(get: { overlay.isVisible },
+                set: { $0 ? overlay.show() : overlay.hide() })
+    }
+
+    private var statusText: String {
+        switch engine.phase {
+        case .idle:             return "Ready"
+        case .arming(let left): return "Starting in \(left)..."
+        case .running:          return "Clicking"
+        }
+    }
 
     var body: some View {
         ZStack {
-            backgroundView
+            AuraBackground()
 
             ScrollView {
-            VStack(spacing: 5) {
-                Image(systemName: "gearshape")
-                    .imageScale(.large)
-                    .foregroundStyle(config.textColor)
-                    .rotationEffect(.degrees(gearAngle))
-                    .entrance(0, active: hasAppeared)
-
-                Text("SwiftClicker v5.0")
-                    .font(.title2)
-                    .bold()
-                    .foregroundStyle(config.textColor)
-                    .entrance(1, active: hasAppeared)
-
-                Text("")
-
-                Text("Clicks: \(numbernum)")
-                    .monospacedDigit()
-                    .contentTransition(.numericText(value: Double(numbernum)))
-                    .foregroundStyle(config.textColor)
-                    .scaleEffect(counterPop)
-                    .entrance(2, active: hasAppeared)
-
-                Text("Per Click: \(numberper)")
-                    .monospacedDigit()
-                    .contentTransition(.numericText(value: Double(numberper)))
-                    .foregroundStyle(config.textColor)
-                    .entrance(3, active: hasAppeared)
-
-                Button("Click") {
-                    registerClick()
+                VStack(spacing: 18) {
+                    header
+                    if !engine.isTrusted { permissionCard }
+                    startButton
+                    counters
+                    controlsCard
+                    gameButton
                 }
-                .buttonStyle(.glass(.clear))
-                .controlSize(.extraLarge)
-                .overlay { RippleOverlay(trigger: clickTick, tint: config.textColor) }
-                .keyframeAnimator(initialValue: CGFloat(1), trigger: clickTick) { view, scale in
-                    view.scaleEffect(scale)
-                } keyframes: { _ in
-                    KeyframeTrack {
-                        SpringKeyframe(0.90, duration: 0.10, spring: .snappy)
-                        SpringKeyframe(1.07, duration: 0.16, spring: .bouncy)
-                        SpringKeyframe(1.00, duration: 0.20, spring: .snappy)
-                    }
-                }
-                .overlay(alignment: .top) {
-                    ZStack {
-                        ForEach(gains) { gain in
-                            FloatingGainView(gain: gain, tint: config.textColor)
-                        }
-                    }
-                    .frame(height: 0)
-                }
-                .entrance(4, active: hasAppeared)
-
-                Button("+1 per click. Cost \(numberpercost) Clicks") {
-                    buyUpgrade()
-                }
-                .disabled(numbernum < numberpercost)
-                .contentTransition(.numericText(value: Double(numberpercost)))
-                .phaseAnimator([false, true]) { view, glow in
-                    view
-                        .scaleEffect(canAfford && glow ? 1.045 : 1.0)
-                        .shadow(color: .accentColor.opacity(canAfford && glow ? 0.55 : 0),
-                                radius: canAfford && glow ? 11 : 0)
-                } animation: { _ in .easeInOut(duration: 1.15) }
-                .animation(.spring(response: 0.4, dampingFraction: 0.7), value: canAfford)
-                .entrance(5, active: hasAppeared)
-
-                if !developeractive {
-                    Button("Custom mode") {
-                        withAnimation(.spring(response: 0.42, dampingFraction: 0.75)) {
-                            showsDeveloperCodeField = true
-                        }
-                    }
-                    .font(.caption)
-                    .controlSize(.small)
-                    .hoverLift(1.08)
-                    .entrance(6, active: hasAppeared)
-
-                    if showsDeveloperCodeField {
-                        TextField("Code for custom mode", text: $incode)
-                            .textFieldStyle(.roundedBorder)
-                            .frame(width: 220)
-                            .padding(.vertical, 8)
-                            .shake(shakeTick)
-                            .onSubmit {
-                                if incode == config.customCode {
-                                    withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                                        developeractive = true
-                                        showsDeveloperCodeField = false
-                                        errorMessage = ""
-                                    }
-                                } else {
-                                    flashError("Error: Invalid code")
-                                }
-                            }
-                            .transition(.asymmetric(
-                                insertion: .push(from: .top).combined(with: .opacity),
-                                removal: .scale(scale: 0.92).combined(with: .opacity)))
-                    }
-                }
-
-                if developeractive {
-                    Text("Custom mode active")
-                        .transition(.scale(scale: 0.9).combined(with: .opacity))
-
-                    TextField("Add clicks", text: $numberadd)
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 220)
-                        .padding(.vertical, 8)
-                        .shake(shakeTick)
-                        .onSubmit {
-                            if let clicksToAdd = Int(numberadd) {
-                                let (result, overflow) = numbernum.addingReportingOverflow(clicksToAdd)
-                                withAnimation(.snappy(duration: 0.45)) {
-                                    numbernum = overflow ? Int.max : result
-                                    errorMessage = ""
-                                }
-                                popCounter()
-                            } else {
-                                flashError("Error: Not a number")
-                            }
-                        }
-                        .transition(.asymmetric(
-                            insertion: .push(from: .bottom).combined(with: .opacity),
-                            removal: .opacity))
-                }
+                .padding(.horizontal, Layout.horizontalPadding)
+                .padding(.top, 24)
+                .padding(.bottom, 68)
+                .fillScrollContainer()
             }
-            .animation(.spring(response: 0.45, dampingFraction: 0.8), value: developeractive)
-            .animation(.spring(response: 0.45, dampingFraction: 0.8), value: showsDeveloperCodeField)
-            .overlay(alignment: .bottom) {
-                if !errorMessage.isEmpty {
-                    Text(errorMessage)
-                        .font(.caption)
-                        .foregroundColor(.red)
-                        .padding(.bottom, -24)
-                        .shake(shakeTick)
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
-                }
-            }
-            .padding(.horizontal, 22)
-            .padding(.bottom, 56)
-            .fillScrollContainer()
-            } // ScrollView
             .scrollIndicators(.never)
         }
-        .overlay(alignment: .bottomLeading) {
-            Button {
-                showsSettings = true
-            } label: {
-                Image(systemName: "gearshape.fill")
-                    .font(.title3)
-                    .rotationEffect(.degrees(settingsHovering ? 120 : 0))
-            }
-            .buttonStyle(.glass)
-            .scaleEffect(settingsHovering ? 1.1 : 1.0)
-            .padding(.leading, 18)
-            .padding(.bottom, 18)
-            .onHover { hovering in
-                guard Layout.hasPointer else { return }
-                withAnimation(.spring(response: 0.45, dampingFraction: 0.55)) {
-                    settingsHovering = hovering
-                }
-            }
-            .entrance(7, active: hasAppeared)
-        }
+        .overlay(alignment: .bottomLeading) { settingsButton }
         .sheet(isPresented: $showsSettings) {
-            SettingsView()
-                .environmentObject(config)
+            SettingsView().environmentObject(config)
         }
         .preferredColorScheme(config.preferredColorScheme)
         .onAppear { hasAppeared = true }
     }
 
+    // MARK: - Pieces
 
-    private func registerClick() {
-        let (result, overflow) = numbernum.addingReportingOverflow(numberper)
-        withAnimation(.snappy(duration: 0.3)) {
-            numbernum = overflow ? Int.max : result
-        }
+    private var header: some View {
+        VStack(spacing: 4) {
+            Image(systemName: "cursorarrow.click.2")
+                .imageScale(.large)
+                .foregroundStyle(config.textColor)
+                .entrance(0, active: hasAppeared)
 
-        let gain = FloatingGain.random(amount: numberper)
-        gains.append(gain)
-        clickTick &+= 1
-
-        withAnimation(.spring(response: 0.4, dampingFraction: 0.45)) {
-            gearAngle += 45
-        }
-        popCounter()
-
-        Task {
-            try? await Task.sleep(for: .milliseconds(950))
-            gains.removeAll { $0.id == gain.id }
+            Text("SwiftClicker v\(AppInfo.version)")
+                .font(Layout.titleFont)
+                .bold()
+                .foregroundStyle(config.textColor)
+                .entrance(1, active: hasAppeared)
         }
     }
 
-    private func buyUpgrade() {
-        withAnimation(.snappy(duration: 0.35)) {
-            numbernum -= numberpercost
-            numberpercost *= 2
-            numberper += 1
+    private var permissionCard: some View {
+        VStack(spacing: 8) {
+            Label("Accessibility access needed", systemImage: "lock.shield")
+                .font(.subheadline.bold())
+            Text("macOS only lets trusted apps send clicks to other apps.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+            HStack(spacing: 8) {
+                Button("Grant Access") { engine.requestPermission() }
+                    .hoverLift(1.05)
+                Button("Open Settings") { engine.openAccessibilitySettings() }
+                    .hoverLift(1.05)
+            }
+            .controlSize(.small)
         }
-        withAnimation(.spring(response: 0.45, dampingFraction: 0.4)) {
-            gearAngle += 180
-        }
-        popCounter()
+        .padding(12)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+            .strokeBorder(.orange.opacity(0.5), lineWidth: 1))
+        .transition(.scale(scale: 0.94).combined(with: .opacity))
+        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: engine.isTrusted)
     }
 
-    private func popCounter() {
-        withAnimation(.spring(response: 0.16, dampingFraction: 0.4)) {
-            counterPop = 1.18
-        }
-        Task {
-            try? await Task.sleep(for: .milliseconds(130))
-            withAnimation(.spring(response: 0.32, dampingFraction: 0.55)) {
-                counterPop = 1
+    private var startButton: some View {
+        Button { engine.toggle() } label: {
+            ZStack {
+                Circle()
+                    .fill(.ultraThinMaterial)
+                    .overlay(Circle().strokeBorder(startTint.opacity(0.6), lineWidth: 3))
+                    .frame(width: 128, height: 128)
+                    .shadow(color: startTint.opacity(engine.isActive ? 0.55 : 0.2), radius: 18)
+
+                VStack(spacing: 2) {
+                    if case .arming(let left) = engine.phase {
+                        Text("\(left)")
+                            .font(.system(size: 44, weight: .bold, design: .rounded))
+                            .monospacedDigit()
+                    } else {
+                        Image(systemName: engine.isActive ? "stop.fill" : "play.fill")
+                            .font(.system(size: 38, weight: .semibold))
+                    }
+                    Text(statusText)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .foregroundStyle(startTint)
             }
         }
+        .buttonStyle(.plain)
+        .disabled(!engine.isTrusted)
+        .hoverLift(1.04)
+        .animation(.spring(response: 0.35, dampingFraction: 0.7), value: engine.phase)
+        .entrance(2, active: hasAppeared)
     }
 
-    private func flashError(_ message: String) {
-        withAnimation(.snappy(duration: 0.25)) { errorMessage = message }
-        shakeTick &+= 1
-        Task {
-            try? await Task.sleep(for: .seconds(1))
-            withAnimation(.easeOut(duration: 0.3)) { errorMessage = "" }
+    private var startTint: Color {
+        switch engine.phase {
+        case .idle:    return config.textColor
+        case .arming:  return .orange
+        case .running: return .green
         }
     }
 
+    private var counters: some View {
+        VStack(spacing: 2) {
+            Text("Clicks sent: \(engine.clicksSent)")
+                .font(Layout.counterFont)
+                .monospacedDigit()
+                .contentTransition(.numericText(value: Double(engine.clicksSent)))
+                .foregroundStyle(config.textColor)
+            if config.hotkeyKeyCode >= 0 {
+                Text("\(Hotkey.name(for: config.hotkeyKeyCode)) toggles from anywhere")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .entrance(3, active: hasAppeared)
+    }
 
+    /// Keeps the controls off the window edges and inside a visible frame.
+    private var controlsCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            frequencyRow
+            Divider().opacity(0.35)
+            targetRow
+            Divider().opacity(0.35)
+            overlayRow
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
+            .strokeBorder(config.textColor.opacity(0.18), lineWidth: 1))
+    }
 
-    @ViewBuilder
-    private var backgroundView: some View {
-        if !config.backgroundImagePath.isEmpty,
-           let image = Image(contentsOfFile: config.backgroundImagePath) {
-            image
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .blur(radius: 8, opaque: true)
-                .scaleEffect(bgDrift)
-                .ignoresSafeArea()
-                .transition(.opacity)
-                .onAppear {
-                    withAnimation(.easeInOut(duration: 26).repeatForever(autoreverses: true)) {
-                        bgDrift = 1.14
+    private var frequencyRow: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text("Speed").foregroundStyle(config.textColor)
+                Spacer()
+                Text("\(Int(config.clicksPerSecond)) CPS")
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+            }
+            .font(.subheadline)
+
+            Slider(value: $config.clicksPerSecond, in: 1...50, step: 1)
+        }
+        .entrance(4, active: hasAppeared)
+    }
+
+    private var targetRow: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Picker("", selection: $config.clickTarget.animation(.snappy(duration: 0.25))) {
+                Text("Cursor").tag(0)
+                Text("Fixed point").tag(1)
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+
+            if config.clickTarget == 1 {
+                HStack(spacing: 8) {
+                    Text(String(format: "x %.0f, y %.0f", config.fixedPointX, config.fixedPointY))
+                        .font(.caption)
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    if let left = engine.pointCapture {
+                        Text("Move the cursor... \(left)")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                        Button("Cancel") { engine.cancelPointCapture() }
+                            .controlSize(.small)
+                    } else {
+                        Button("Set from cursor") { engine.captureFixedPoint() }
+                            .controlSize(.small)
+                            .hoverLift(1.05)
                     }
                 }
-        } else {
-            AuraBackground()
-                .transition(.opacity)
+                .transition(.push(from: .top).combined(with: .opacity))
+            }
         }
+        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: config.clickTarget)
+        .animation(.snappy(duration: 0.25), value: engine.pointCapture)
+        .entrance(5, active: hasAppeared)
+    }
+
+    private var overlayRow: some View {
+        Toggle(isOn: overlayBinding.animation(.snappy(duration: 0.25))) {
+            Text("Floating overlay").foregroundStyle(config.textColor)
+        }
+        .font(.subheadline)
+        .toggleStyle(.switch)
+        .entrance(6, active: hasAppeared)
+    }
+
+    private var gameButton: some View {
+        Button {
+            openWindow(id: "game")
+        } label: {
+            Label("Play the clicker game", systemImage: "gamecontroller")
+        }
+        .controlSize(.small)
+        .hoverLift(1.05)
+        .entrance(7, active: hasAppeared)
+    }
+
+    private var settingsButton: some View {
+        Button {
+            showsSettings = true
+        } label: {
+            Image(systemName: "gearshape.fill")
+                .font(.title3)
+                .rotationEffect(.degrees(settingsHovering ? 120 : 0))
+        }
+        .buttonStyle(.glass)
+        .scaleEffect(settingsHovering ? 1.1 : 1.0)
+        .padding(.leading, 22)
+        .padding(.bottom, 22)
+        .onHover { hovering in
+            guard Layout.hasPointer else { return }
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.55)) {
+                settingsHovering = hovering
+            }
+        }
+        .entrance(8, active: hasAppeared)
     }
 }
 
+#endif
+
 #Preview {
-    ContentView()
-        .environmentObject(ConfigManager())
+    let config = ConfigManager()
+    #if os(macOS)
+    let engine = ClickerEngine(config: config)
+    return ContentView()
+        .environmentObject(config)
+        .environmentObject(engine)
+        .environmentObject(OverlayController(config: config, engine: engine))
+    #else
+    return ContentView().environmentObject(config)
+    #endif
 }
